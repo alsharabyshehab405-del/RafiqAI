@@ -1,0 +1,38 @@
+name: Production Backup
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL"
+          mkdir -p backup
+          pg_dump "$DATABASE_URL" --format=custom --no-owner --file="backup/rafiq-$(date -u +%Y%m%dT%H%M%SZ).dump"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.BACKUP_AWS_REGION }}
+      - name: Upload encrypted backup
+        env:
+          BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
+        run: |
+          test -n "$BUCKET"
+          aws s3 cp backup/ "s3://$BUCKET/rafiq/postgres/" --recursive --sse AES256
+      - name: Verify object exists
+        env:
+          BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
+        run: aws s3 ls "s3://$BUCKET/rafiq/postgres/" --recursive | tail -5

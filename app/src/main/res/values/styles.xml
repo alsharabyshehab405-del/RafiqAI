@@ -1,0 +1,1 @@
+<resources><style name="Theme.RafiqAI" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">true</item><item name="android:statusBarColor">#F8F6FC</item><item name="android:navigationBarColor">#F8F6FC</item></style></resources>

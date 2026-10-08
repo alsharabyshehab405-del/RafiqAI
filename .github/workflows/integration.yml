@@ -1,0 +1,24 @@
+name: Docker Integration
+on: workflow_dispatch
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare integration environment
+        run: |
+          cp .env.example .env
+          sed -i 's#postgresql+psycopg://rafiq:change-me@localhost:5432/rafiq#postgresql+psycopg://rafiq:change-me@postgres:5432/rafiq#' .env
+          sed -i 's#redis://redis:6379/0#redis://redis:6379/0#' .env
+          printf '\nJWT_SECRET=integration-secret-integration-secret-123456789\nAI_API_KEY=integration-key\n' >> .env
+      - run: docker compose build
+      - run: docker compose up -d
+      - name: Wait for readiness
+        run: |
+          for i in $(seq 1 30); do curl -fsS http://localhost:8000/ready && exit 0; sleep 2; done
+          docker compose logs
+          exit 1
+      - run: curl -fsS http://localhost:8000/health
+      - run: curl -fsS http://localhost:8000/metrics
+      - if: always()
+        run: docker compose down -v

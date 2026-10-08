@@ -1,0 +1,30 @@
+name: Android Debug + Tests
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  build-and-unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '9.1.0'}
+      - name: Compile and unit test
+        run: gradle assembleDebug test --no-daemon -PrafiqBaseUrl=https://api.example.invalid/
+      - uses: actions/upload-artifact@v4
+        with: {name: rafiq-debug-apk, path: app/build/outputs/apk/debug/app-debug.apk}
+  instrumentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '9.1.0'}
+      - name: Android instrumented UI tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          script: gradle connectedDebugAndroidTest --no-daemon -PrafiqBaseUrl=https://api.example.invalid/
