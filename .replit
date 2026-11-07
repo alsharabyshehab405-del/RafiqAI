@@ -5,3 +5,7 @@ packages = ["file", "postgresql"]
 
 [agent]
 expertMode = true
+
+[[ports]]
+localPort = 8000
+externalPort = 80
