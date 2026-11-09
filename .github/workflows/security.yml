@@ -15,7 +15,7 @@ jobs:
         run: bash scripts/verify-no-secrets.sh
 
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.master
         with:
           scan-type: fs
           scan-ref: .
